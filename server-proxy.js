@@ -9,7 +9,7 @@ const handler = {
         return (service, implementation) => {
             const newImplementation = {};
             const lookup = utils.lookupServiceMetadata(service, implementation);
-            for (const k in service) {
+            for (const k in implementation) {
                 const name = k;
                 const fn = implementation[k];
                 newImplementation[name] = (call, callback) => {
