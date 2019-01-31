@@ -7,12 +7,12 @@ const handler = {
             return target[propKey];
         }
         return (service, implementation) => {
-            const newImplementation = {};
             const lookup = utils.lookupServiceMetadata(service, implementation);
             for (const k in service) {
                 const name = k;
                 const fn = implementation[k];
-                newImplementation[name] = (call, callback) => {
+                implementation[name] = function (call, callback) {
+                    const self = this;
                     const ctx = {
                         call,
                         service: lookup(name),
@@ -38,21 +38,21 @@ const handler = {
                     const errorCb = grpcServiceError => callback(grpcServiceError, null);
                     if (!first.value) { // if we don't have any interceptors
                         return new Promise(resolve => {
-                            return resolve(fn(call, newCallback(callback)));
+                            return resolve(fn.apply(self, call, newCallback(callback)));
                         });
                     }
                     first.value(ctx, function next() {
                         return new Promise(resolve => {
                             const i = interceptors.next();
                             if (i.done) {
-                                return resolve(fn(call, newCallback(callback)));
+                                return resolve(fn.apply(self, call, newCallback(callback)));
                             }
                             return resolve(i.value(ctx, next));
                         });
                     }, errorCb);
                 };
             }
-            return target.addService(service, newImplementation);
+            return target.addService(service, implementation);
         };
     },
 };
